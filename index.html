@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Kalian</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0a0a0f;
+            color: #e2e2f0;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        .app {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 1.5rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #2a2a3c;
+        }
+        .logo { font-size: 2.5rem; }
+        .brand h1 { font-size: 1.3rem; font-weight: 700; }
+        .version { font-size: 0.75rem; color: #8b8ba0; }
+        
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            padding: 0.8rem 1rem;
+            background: #151520;
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+        .status-bar.online { color: #22c55e; border: 1px solid #22c55e; }
+        .status-bar.offline { color: #ef4444; border: 1px solid #ef4444; }
+        
+        .hero {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .hero h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #fff, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero p { color: #8b8ba0; }
+        
+        .card {
+            background: #151520;
+            border: 1px solid #2a2a3c;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+        .card h3 {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            color: #8b8ba0;
+        }
+        
+        .form-group { margin-bottom: 1.5rem; }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        input, textarea {
+            width: 100%;
+            background: #0a0a0f;
+            border: 1px solid #2a2a3c;
+            border-radius: 12px;
+            padding: 0.9rem 1rem;
+            color: #e2e2f0;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .kategori-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.8rem;
+        }
+        .kategori-card { cursor: pointer; }
+        .kategori-card input { display: none; }
+        .kategori-card span {
+            display: block;
+            padding: 1rem;
+            background: #0a0a0f;
+            border: 2px solid #2a2a3c;
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .kategori-card input:checked + span {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.1);
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.9rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: #6366f1;
+            color: white;
+            width: 100%;
+        }
+        .btn-primary:hover:not(:disabled) {
+            background: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+        }
+        .btn-secondary {
+            background: #1e1e2e;
+            color: #e2e2f0;
+            border: 1px solid #2a2a3c;
+            width: 100%;
+        }
+        .btn-secondary:hover { background: #2a2a3c; }
+        .btn-small { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+        .btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        .hidden { display: none !important; }
+        
+        .success-card {
+            text-align: center;
+            animation: slideUp 0.5s ease;
+        }
+        .success-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: bounce 0.5s ease;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .ticket-box {
+            background: #0a0a0f;
+            border: 2px dashed #6366f1;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            position: relative;
+        }
+        .ticket-box .label {
+            display: block;
+            font-size: 0.75rem;
+            color: #8b8ba0;
+            letter-spacing: 2px;
+            margin-bottom: 0.5rem;
+        }
+        .ticket-box .number {
+            display: block;
+            font-size: 2.5rem;
+            font-weight: 700;
+            font-family: monospace;
+            color: #6366f1;
+        }
+        .ticket-box .btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+        }
+        
+        .track-form {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .track-form input { flex: 1; }
+        .track-result {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #0a0a0f;
+            border-radius: 12px;
+            border-left: 4px solid #6366f1;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #151520;
+            color: #e2e2f0;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            border: 1px solid #2a2a3c;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 2rem 0;
+            color: #8b8ba0;
+            font-size: 0.85rem;
+            margin-top: auto;
+        }
+        
+        @media (max-width: 480px) {
+            .kategori-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <span class="logo">📨</span>
+            <div class="brand">
+                <h1>Request</h1>
+                <span class="version">v0.0.8</span>
+            </div>
+        </header>
+
+        <div class="status-bar" id="statusBar">
+            <span>🌐</span>
+            <span id="statusText">Menghubungkan ke server...</span>
+        </div>
+
+        <main>
+            <section class="hero">
+                <h2>Kirim Request ke Owner</h2>
+                <p>Request Cosplay, request Anime, atau ajukan pertanyaan</p>
+            </section>
+
+            <section class="card" id="formCard">
+                <form id="requestForm">
+                    <div class="form-group">
+                        <label>Nama Lengkap *</label>
+                        <input type="text" id="nama" required minlength="2" placeholder="Nama kamu...">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Kategori *</label>
+                        <div class="kategori-grid">
+                            <label class="kategori-card">
+                                <input type="radio" name="kategori" value="cosplay" required>
+                                <span>cosplay</span>
+                            </label>
+                            <label class="kategori-card">
+                                <input type="radio" name="kategori" value="Tobrut">
+                                <span>Tobrut</span>
+                            </label>
+                            <label class="kategori-card">
+                                <input type="radio" name="kategori" value="Post Biasa">
+                                <span>Post Biasa</span>
+                            </label>
+                            <label class="kategori-card">
+                                <input type="radio" name="kategori" value="Serah Owner">
+                                <span>Serah Owner</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Detail Request *</label>
+                        <textarea id="pesan" required minlength="10" placeholder="Jelaskan detailnya..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <span id="btnText">Kirim Request</span>
+                    </button>
+                </form>
+            </section>
+
+            <section class="card success-card hidden" id="successCard">
+                <div class="success-icon">✅</div>
+                <h3>Request Terkirim!</h3>
+                <div class="ticket-box">
+                    <span class="label">NOMOR TICKET</span>
+                    <span class="number" id="ticketNumber">-</span>
+                    <button class="btn btn-secondary btn-small" onclick="copyTicket()">📋 Copy</button>
+                </div>
+                <button class="btn btn-secondary" onclick="resetForm()">Kirim Lagi</button>
+            </section>
+
+            <section class="card">
+                <h3>🔍 Tracking Request</h3>
+                <div class="track-form">
+                    <input type="number" id="trackInput" placeholder="Nomor ticket...">
+                    <button class="btn btn-primary" onclick="trackRequest()">Cek</button>
+                </div>
+                <div id="trackResult" class="track-result hidden"></div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>User Portal v0.0.8 | Cloud Sync Edition</p>
+        </footer>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // CONFIG - GANTI INI DENGAN API KEY JSONBIN.IO KAMU
+        // Daftar gratis di: /
+        const CONFIG = {
+            JSONBIN_API_KEY: '$2a$10$YT5UJTna75CaB4t2bapTruk0NBMykTuUkmhYcPTCHLOlFYL9Oneoy', // GANTI INI!
+            JSONBIN_BIN_ID: '6982f690d0ea881f409f86a3', // GANTI INI!
+            API_URL: 'https://api.jsonbin.io/v3/b'
+        };
+
+        let lastTicket = null;
+        let isOnline = false;
+
+        // Cek koneksi ke JSONBin saat load
+        async function checkConnection() {
+            const statusBar = document.getElementById('statusBar');
+            const statusText = document.getElementById('statusText');
+            
+            try {
+                // Test fetch
+                const response = await fetch(`${CONFIG.API_URL}/${CONFIG.JSONBIN_BIN_ID}/latest`, {
+                    headers: { 'X-Master-Key': CONFIG.JSONBIN_API_KEY }
+                });
+                
+                if (response.ok) {
+                    isOnline = true;
+                    statusBar.className = 'status-bar online';
+                    statusText.textContent = '✅ Terhubung ke server';
+                    return true;
+                }
+            } catch (e) {
+                console.log('API not available, using localStorage fallback');
+            }
+            
+            isOnline = false;
+            statusBar.className = 'status-bar offline';
+            statusText.textContent = '⚠️ Mode offline (data tersimpan lokal)';
+            return false;
+        }
+
+        async function getRequests() {
+            try {
+                const response = await fetch(`${CONFIG.API_URL}/${CONFIG.JSONBIN_BIN_ID}/latest`, {
+                    headers: { 'X-Master-Key': CONFIG.JSONBIN_API_KEY }
+                });
+                
+                if (!response.ok) throw new Error('API Error');
+                
+                const result = await response.json();
+                return result.record?.requests || [];
+            } catch (e) {
+                // Fallback localStorage
+                return JSON.parse(localStorage.getItem('requests_backup') || '[]');
+            }
+        }
+
+        async function saveRequests(requests) {
+            try {
+                const response = await fetch(`${CONFIG.API_URL}/${CONFIG.JSONBIN_BIN_ID}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': CONFIG.JSONBIN_API_KEY
+                    },
+                    body: JSON.stringify({ requests })
+                });
+                
+                if (!response.ok) throw new Error('Save failed');
+                
+                // Backup ke localStorage juga
+                localStorage.setItem('requests_backup', JSON.stringify(requests));
+                return true;
+            } catch (e) {
+                // Cuma simpan ke localStorage
+                localStorage.setItem('requests_backup', JSON.stringify(requests));
+                return false;
+            }
+        }
+
+        async function handleSubmit(e) {
+            e.preventDefault();
+            
+            const kategori = document.querySelector('input[name="kategori"]:checked');
+            if (!kategori) {
+                showToast('Pilih kategori dulu!', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            
+            btn.disabled = true;
+            btnText.textContent = 'Mengirim...';
+
+            const newRequest = {
+                id: Date.now(),
+                nama: document.getElementById('nama').value.trim(),
+                kategori: kategori.value,
+                pesan: document.getElementById('pesan').value.trim(),
+                status: 'pending',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            try {
+                // Ambil data existing
+                const requests = await getRequests();
+                
+                // Tambah request baru
+                requests.unshift(newRequest);
+                
+                // Simpan ke cloud
+                await saveRequests(requests);
+                
+                lastTicket = newRequest.id;
+                showSuccess();
+                showToast(isOnline ? '✅ Request terkirim ke server!' : '⚠️ Request tersimpan lokal');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('❌ Gagal mengirim, coba lagi!', 'error');
+            } finally {
+                btn.disabled = false;
+                btnText.textContent = 'Kirim Request';
+            }
+        }
+
+        async function trackRequest() {
+            const ticket = document.getElementById('trackInput').value;
+            const resultDiv = document.getElementById('trackResult');
+            
+            if (!ticket) {
+                showToast('Masukkan nomor ticket!', 'error');
+                return;
+            }
+
+            try {
+                const requests = await getRequests();
+                const req = requests.find(r => r.id == ticket);
+
+                if (!req) {
+                    resultDiv.innerHTML = '<p style="color:#ef4444">❌ Ticket tidak ditemukan</p>';
+                    resultDiv.classList.remove('hidden');
+                    return;
+                }
+
+                const statusMap = {
+                    pending: { icon: '⏳', text: 'Menunggu Review', color: '#8b8ba0' },
+                    process: { icon: '🔧', text: 'Sedang Diproses', color: '#f59e0b' },
+                    accepted: { icon: '✅', text: 'Request Diterima', color: '#22c55e' },
+                    rejected: { icon: '❌', text: 'Request Ditolak', color: '#ef4444' }
+                };
+
+                const s = statusMap[req.status];
+                resultDiv.innerHTML = `
+                    <div style="margin-bottom:0.5rem"><strong>${escapeHtml(req.nama)}</strong></div>
+                    <div style="color:#8b8ba0;font-size:0.9rem;margin-bottom:0.8rem">${escapeHtml(req.pesan.substring(0, 100))}...</div>
+                    <div style="display:flex;align-items:center;gap:0.5rem;color:${s.color};font-weight:600">
+                        <span>${s.icon}</span> ${s.text}
+                    </div>
+                    <div style="margin-top:0.8rem;font-size:0.8rem;color:#6366f1">
+                        ${isOnline ? '🌐 Data dari server' : '💾 Data lokal'}
+                    </div>
+                `;
+                resultDiv.classList.remove('hidden');
+                
+            } catch (error) {
+                showToast('Gagal mencari ticket', 'error');
+            }
+        }
+
+        function showSuccess() {
+            document.getElementById('ticketNumber').textContent = lastTicket;
+            document.getElementById('formCard').classList.add('hidden');
+            document.getElementById('successCard').classList.remove('hidden');
+        }
+
+        function resetForm() {
+            document.getElementById('requestForm').reset();
+            document.getElementById('formCard').classList.remove('hidden');
+            document.getElementById('successCard').classList.add('hidden');
+        }
+
+        function copyTicket() {
+            navigator.clipboard.writeText(lastTicket).then(() => {
+                showToast('📋 Nomor ticket dicopy!');
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.style.borderColor = type === 'error' ? '#ef4444' : '#22c55e';
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Init
+        document.getElementById('requestForm').addEventListener('submit', handleSubmit);
+        checkConnection();
+    </script>
+</body>
+</html>
