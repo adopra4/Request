@@ -255,6 +255,12 @@
         @media (max-width: 480px) {
             .kategori-grid { grid-template-columns: 1fr; }
         }
+        
+        .whatsapp-hint {
+            font-size: 0.8rem;
+            color: #8b8ba0;
+            margin-top: 0.3rem;
+        }
     </style>
 </head>
 <body>
@@ -263,7 +269,7 @@
             <span class="logo">📨</span>
             <div class="brand">
                 <h1>Request</h1>
-                <span class="version">v0.0.8</span>
+                <span class="version">v0.0.9</span>
             </div>
         </header>
 
@@ -283,6 +289,12 @@
                     <div class="form-group">
                         <label>Nama Lengkap *</label>
                         <input type="text" id="nama" required minlength="2" placeholder="Nama kamu...">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nomor WhatsApp *</label>
+                        <input type="tel" id="whatsapp" required placeholder="6281234567890" pattern="[0-9]+">
+                        <div class="whatsapp-hint">Format: 628xxxxxxxxxx (tanpa + atau spasi)</div>
                     </div>
 
                     <div class="form-group">
@@ -340,7 +352,7 @@
         </main>
 
         <footer class="footer">
-            <p>User Portal v0.0.8 | Cloud Sync Edition</p>
+            <p>User Portal v0.0.9 | Cloud Sync Edition</p>
         </footer>
     </div>
 
@@ -348,23 +360,20 @@
 
     <script>
         // CONFIG - GANTI INI DENGAN API KEY JSONBIN.IO KAMU
-        // Daftar gratis di: /
         const CONFIG = {
-            JSONBIN_API_KEY: '$2a$10$YT5UJTna75CaB4t2bapTruk0NBMykTuUkmhYcPTCHLOlFYL9Oneoy', // GANTI INI!
-            JSONBIN_BIN_ID: '6982f690d0ea881f409f86a3', // GANTI INI!
+            JSONBIN_API_KEY: '$2a$10$YT5UJTna75CaB4t2bapTruk0NBMykTuUkmhYcPTCHLOlFYL9Oneoy',
+            JSONBIN_BIN_ID: '6982f690d0ea881f409f86a3',
             API_URL: 'https://api.jsonbin.io/v3/b'
         };
 
         let lastTicket = null;
         let isOnline = false;
 
-        // Cek koneksi ke JSONBin saat load
         async function checkConnection() {
             const statusBar = document.getElementById('statusBar');
             const statusText = document.getElementById('statusText');
             
             try {
-                // Test fetch
                 const response = await fetch(`${CONFIG.API_URL}/${CONFIG.JSONBIN_BIN_ID}/latest`, {
                     headers: { 'X-Master-Key': CONFIG.JSONBIN_API_KEY }
                 });
@@ -396,7 +405,6 @@
                 const result = await response.json();
                 return result.record?.requests || [];
             } catch (e) {
-                // Fallback localStorage
                 return JSON.parse(localStorage.getItem('requests_backup') || '[]');
             }
         }
@@ -414,11 +422,9 @@
                 
                 if (!response.ok) throw new Error('Save failed');
                 
-                // Backup ke localStorage juga
                 localStorage.setItem('requests_backup', JSON.stringify(requests));
                 return true;
             } catch (e) {
-                // Cuma simpan ke localStorage
                 localStorage.setItem('requests_backup', JSON.stringify(requests));
                 return false;
             }
@@ -433,6 +439,12 @@
                 return;
             }
 
+            const whatsapp = document.getElementById('whatsapp').value.trim();
+            if (!/^[0-9]{10,15}$/.test(whatsapp)) {
+                showToast('Nomor WhatsApp tidak valid!', 'error');
+                return;
+            }
+
             const btn = document.getElementById('submitBtn');
             const btnText = document.getElementById('btnText');
             
@@ -442,6 +454,7 @@
             const newRequest = {
                 id: Date.now(),
                 nama: document.getElementById('nama').value.trim(),
+                whatsapp: whatsapp,
                 kategori: kategori.value,
                 pesan: document.getElementById('pesan').value.trim(),
                 status: 'pending',
@@ -450,13 +463,8 @@
             };
 
             try {
-                // Ambil data existing
                 const requests = await getRequests();
-                
-                // Tambah request baru
                 requests.unshift(newRequest);
-                
-                // Simpan ke cloud
                 await saveRequests(requests);
                 
                 lastTicket = newRequest.id;
@@ -501,6 +509,7 @@
                 const s = statusMap[req.status];
                 resultDiv.innerHTML = `
                     <div style="margin-bottom:0.5rem"><strong>${escapeHtml(req.nama)}</strong></div>
+                    <div style="color:#8b8ba0;font-size:0.9rem;margin-bottom:0.5rem">📱 ${escapeHtml(req.whatsapp)}</div>
                     <div style="color:#8b8ba0;font-size:0.9rem;margin-bottom:0.8rem">${escapeHtml(req.pesan.substring(0, 100))}...</div>
                     <div style="display:flex;align-items:center;gap:0.5rem;color:${s.color};font-weight:600">
                         <span>${s.icon}</span> ${s.text}
@@ -548,7 +557,6 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        // Init
         document.getElementById('requestForm').addEventListener('submit', handleSubmit);
         checkConnection();
     </script>
