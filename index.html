@@ -315,7 +315,7 @@
             <span class="logo">📨</span>
             <div class="brand">
                 <h1>Request</h1>
-                <span class="version">v0.2.1</span>
+                <span class="version">v0.2.2</span>
             </div>
         </header>
 
@@ -418,7 +418,7 @@
         </main>
 
         <footer class="footer">
-            <p>User Portal v0.2.1 | Owner Direct Edition</p>
+            <p>User Portal v0.2.2 | Owner Direct Edition</p>
         </footer>
     </div>
 
@@ -477,13 +477,26 @@
                 if (!response.ok) throw new Error('API Error');
                 
                 const result = await response.json();
-                return result.record || { requests: [], users: [] };
+                console.log('Data from cloud:', result.record);
+                
+                // Pastikan structure data benar
+                const record = result.record || {};
+                return {
+                    requests: Array.isArray(record.requests) ? record.requests : [],
+                    users: Array.isArray(record.users) ? record.users : []
+                };
             } catch (e) {
-                return JSON.parse(localStorage.getItem('app_data') || '{"requests":[], "users":[]}');
+                console.error('Get data error:', e);
+                const local = JSON.parse(localStorage.getItem('app_data') || '{"requests":[], "users":[]}');
+                return {
+                    requests: Array.isArray(local.requests) ? local.requests : [],
+                    users: Array.isArray(local.users) ? local.users : []
+                };
             }
         }
 
         async function saveData(data) {
+            console.log('Saving data:', data);
             try {
                 const response = await fetch(`${CONFIG.API_URL}/${CONFIG.JSONBIN_BIN_ID}`, {
                     method: 'PUT',
@@ -496,9 +509,15 @@
                 
                 if (!response.ok) throw new Error('Save failed');
                 
+                const result = await response.json();
+                console.log('Save response:', result);
+                
+                isOnline = true;
                 localStorage.setItem('app_data', JSON.stringify(data));
                 return true;
             } catch (e) {
+                console.error('Save error:', e);
+                isOnline = false;
                 localStorage.setItem('app_data', JSON.stringify(data));
                 return false;
             }
@@ -594,46 +613,65 @@
             const nama = document.getElementById('nama').value.trim();
             const whatsapp = document.getElementById('whatsapp').value.trim();
             
-            const data = await getData();
-            let users = data.users || [];
-            let existingUser = users.find(u => u.whatsapp === whatsapp);
-            
-            if (!existingUser) {
-                existingUser = {
-                    id: Date.now(),
+            try {
+                // Ambil data existing
+                const data = await getData();
+                console.log('Existing data:', data);
+                
+                let users = data.users || [];
+                let requests = data.requests || [];
+                
+                // Cari user by whatsapp
+                let userIndex = users.findIndex(u => u.whatsapp === whatsapp);
+                let userId;
+                
+                if (userIndex === -1) {
+                    // User baru
+                    userId = Date.now();
+                    const newUser = {
+                        id: userId,
+                        nama: nama,
+                        whatsapp: whatsapp,
+                        createdAt: new Date().toISOString(),
+                        lastActive: new Date().toISOString(),
+                        requestCount: 1
+                    };
+                    users.push(newUser);
+                    console.log('New user created:', newUser);
+                } else {
+                    // User existing
+                    userId = users[userIndex].id;
+                    users[userIndex].nama = nama; // Update nama kalau berubah
+                    users[userIndex].lastActive = new Date().toISOString();
+                    users[userIndex].requestCount = (users[userIndex].requestCount || 0) + 1;
+                    console.log('User updated:', users[userIndex]);
+                }
+
+                const ticketId = generateTicketId();
+                const newRequest = {
+                    id: ticketId,
+                    userId: userId,
                     nama: nama,
                     whatsapp: whatsapp,
+                    assignedTo: 'owner',
+                    kategori: document.querySelector('input[name="kategori"]:checked').value,
+                    prioritas: document.getElementById('prioritas').value,
+                    pesan: document.getElementById('pesan').value.trim(),
+                    status: 'pending',
                     createdAt: new Date().toISOString(),
-                    requestCount: 0
+                    updatedAt: new Date().toISOString()
                 };
-                users.push(existingUser);
-            }
-            existingUser.requestCount++;
-            existingUser.lastActive = new Date().toISOString();
 
-            const ticketId = generateTicketId();
-            const newRequest = {
-                id: ticketId,
-                userId: existingUser.id,
-                nama: nama,
-                whatsapp: whatsapp,
-                assignedTo: 'owner', // Langsung ke owner
-                kategori: document.querySelector('input[name="kategori"]:checked').value,
-                prioritas: document.getElementById('prioritas').value,
-                pesan: document.getElementById('pesan').value.trim(),
-                status: 'pending',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            };
+                requests.unshift(newRequest);
+                console.log('New request:', newRequest);
 
-            try {
-                data.requests = data.requests || [];
-                data.requests.unshift(newRequest);
-                data.users = users;
-                await saveData(data);
-                
+                // Save ke cloud
+                const saveResult = await saveData({ requests, users });
+                console.log('Save result:', saveResult);
+
                 lastTicket = ticketId;
                 
+                // Simpan ke riwayat lokal
                 let myTickets = JSON.parse(localStorage.getItem('my_tickets') || '[]');
                 myTickets.unshift({ id: ticketId, status: 'pending', date: newRequest.createdAt });
                 localStorage.setItem('my_tickets', JSON.stringify(myTickets));
@@ -643,7 +681,7 @@
                 loadHistory();
                 
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Submit error:', error);
                 showToast('❌ Gagal mengirim, coba lagi!', 'error');
             } finally {
                 btn.disabled = false;
